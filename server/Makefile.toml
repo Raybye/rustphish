@@ -1,0 +1,40 @@
+[config]
+skip_init_end_tasks = true
+skip_core_tasks = true
+
+[env]
+SERVER_FEATURES = "tls" # 可选：tls。详情见./server/Cargo.toml [features]
+
+TARGET_GNU = "x86_64-pc-windows-gnu"
+TARGET_GNU_x86 = "i686-pc-windows-gnu"
+TARGET_LINUX = "x86_64-unknown-linux-gnu"
+
+[tasks.default]
+description = "Platform-specific server build"
+dependencies = ["server-windows", "server-linux"]
+
+[tasks.server-windows]
+condition = { os = ["windows"] }
+description = "Compiles the server for the Windows GNU target."
+script_runner = "@duckscript"
+script = '''
+server-features = get_env SERVER_FEATURES
+if is_empty ${server-features}
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU}
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU} --features ${server-features}
+end
+'''
+
+[tasks.server-linux]
+condition = { os = ["linux"] }
+description = "Compiles the server for the Linux target."
+script_runner = "@duckscript"
+script = '''
+server-features = get_env SERVER_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX}
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --features ${server-features}
+end
+'''

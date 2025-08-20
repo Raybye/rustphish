@@ -1,0 +1,11 @@
+[server]
+ip = "0.0.0.0"
+port = 8080
+is_ssl = false
+
+[paths]
+phish_page = "./frontend/index.html"
+redirect_url = "http://localhost:8080/success"
+success_page = "./frontend/success.html"
+ssl_cert = "./certs/fullchain.pem"
+ssl_key = "./certs/privkey.pem"

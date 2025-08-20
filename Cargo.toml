@@ -1,0 +1,16 @@
+[workspace]
+members = [ 
+    "macro_encrypt", 
+    "shared", 
+    ]
+exclude = [
+    "appendix",
+    "client",
+    "server",
+    ]
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"

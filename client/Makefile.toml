@@ -1,0 +1,40 @@
+[config]
+skip_init_end_tasks = true
+skip_core_tasks = true
+
+[env]
+CLIENT_FEATURES = "" # 可选：db mail appendix qrcode。多个feature以逗号隔开。详情见./client/Cargo.toml [features] (如果为空，则默认所有特性全部开启)
+
+TARGET_GNU = "x86_64-pc-windows-gnu"
+TARGET_GNU_x86 = "i686-pc-windows-gnu"
+TARGET_LINUX = "x86_64-unknown-linux-gnu"
+
+[tasks.default]
+description = "Platform-specific client build"
+dependencies = ["client-windows", "client-linux"]
+
+[tasks.client-windows]
+condition = { os = ["windows"] }
+description = "Compiles the client for the Windows GNU target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU} --features ${features}
+end
+'''
+
+[tasks.client-linux]
+condition = { os = ["linux"] }
+description = "Compiles the client for the Linux target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --features ${features}
+end
+'''

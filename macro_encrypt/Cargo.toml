@@ -1,0 +1,15 @@
+[package]
+name = "macro_encrypt"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+proc-macro2 = "1.0.79"
+syn = { version = "2.0.55", features = ["full"] }
+quote = "1.0.35"
+
+[build-dependencies]
+rand = "0.8.5"
+
+[lib]
+proc-macro = true

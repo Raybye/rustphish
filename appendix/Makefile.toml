@@ -1,0 +1,72 @@
+[config]
+skip_core_tasks = true
+skip_init_end_tasks = true
+
+[env]
+APPENDIX_FEATURES = "selfdelete, noheap, antisandbox" # 可选项：debug noheap antisandbox ntdll selfdelete。详细解释见appendix/Cargo.toml的[features]
+
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+NIGHTLY_VERSION = "nightly-2025-02-14"
+TARGET_GNU = "x86_64-pc-windows-gnu"
+TARGET_GNU_x86 = "i686-pc-windows-gnu"
+RUSTFLAGS_GNU = "-C link-arg=-nostdlib -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-fpack-struct=8 -C link-arg=-Wl,--gc-sections -C link-arg=-falign-jumps=1 -C link-arg=-w -C link-arg=-falign-labels=1 -C link-arg=-Wl,-T./Linker.ld,--build-id=none -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup -C link-arg=-Wl,--subsystem,console -C link-arg=-nostartfiles"
+RUSTFLAGS_GNU_PIC = "-C link-arg=-nostdlib -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-fpack-struct=8 -C link-arg=-Wl,--gc-sections -C link-arg=-falign-jumps=1 -C link-arg=-w -C link-arg=-falign-labels=1 -C relocation-model=pic -C link-arg=-Wl,-T./Linker.ld,--build-id=none -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup -C link-arg=-Wl,--subsystem,console -C link-arg=-nostartfiles -C link-arg=-Wl,-e_start"
+
+# 如果想隐藏编译后程序弹出的命令行窗口，修改下面--subsystem,console 为 --subsystem,windows。可能会小幅度的增加杀软的误报率
+RUSTFLAGS_GNU_EXE = "-C link-arg=-nostdlib -C link-arg=-Wl,--gc-sections -C link-arg=-Wl,--subsystem,console -C link-arg=-nostartfiles -C link-arg=-Wl,-e_start"
+RUSTFLAGS_GNU_EXE_x86 = "-C link-arg=-nostdlib -C link-arg=-Wl,--gc-sections -C link-arg=-Wl,--subsystem,windows -C link-arg=-nostartfiles -C link-arg=-Wl,-e_start -C target-feature=+crt-static"
+RUSTFLAGS_GNU_EXE_DEBUG = "-C link-arg=-nostdlib -C link-arg=-Wl,--gc-sections -C link-arg=-Wl,--subsystem,console -C link-arg=-nostartfiles -C link-arg=-Wl,-e_start"
+
+[tasks.bloat]
+description = "Compiles the project for the GNU target (exe)."
+script_runner = "@duckscript"
+script = '''
+appendix_features = get_env APPENDIX_FEATURES
+if is_empty ${appendix_features}
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo bloat --release --target ${TARGET_GNU} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+else
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo bloat --release --target ${TARGET_GNU} --features ${appendix_features} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+end
+'''
+env = { "RUSTFLAGS" = "${RUSTFLAGS_GNU_EXE}" }
+
+[tasks.default]
+description = "Compiles the project for the GNU target (exe)."
+script_runner = "@duckscript"
+script = '''
+appendix_features = get_env APPENDIX_FEATURES
+if is_empty ${appendix_features}
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo rustc --release --target ${TARGET_GNU} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+else
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo rustc --release --target ${TARGET_GNU} --features ${appendix_features} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+end
+'''
+env = { "RUSTFLAGS" = "${RUSTFLAGS_GNU_EXE}" }
+
+[tasks.x86]
+description = "Compiles the project for the GNU target (exe)."
+script_runner = "@duckscript"
+script = '''
+appendix_features = get_env APPENDIX_FEATURES
+if is_empty ${appendix_features}
+    exec --fail-on-error rustup run nightly-i686-pc-windows-gnu cargo rustc --target ${TARGET_GNU_x86}  -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+else
+    exec --fail-on-error rustup run nightly-i686-pc-windows-gnu cargo rustc --target ${TARGET_GNU_x86} --features ${appendix_features} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+end
+'''
+env = { "RUSTFLAGS" = "${RUSTFLAGS_GNU_EXE_x86}" }
+
+
+[tasks.debug]
+description = "Compiles the project for the GNU target Debug Version (exe)."
+script_runner = "@duckscript"
+script = '''
+appendix_features = get_env APPENDIX_FEATURES
+if is_empty ${appendix_features}
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo rustc --release --target ${TARGET_GNU} --features debug -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+else
+    exec --fail-on-error rustup run ${NIGHTLY_VERSION}-x86_64-pc-windows-gnu cargo rustc --release --target ${TARGET_GNU} --features debug,${appendix_features} -Z build-std=core,alloc,panic_abort -Z build-std-features=panic_immediate_abort
+end
+'''
+env = { "RUSTFLAGS" = "${RUSTFLAGS_GNU_EXE_DEBUG}" }
+
