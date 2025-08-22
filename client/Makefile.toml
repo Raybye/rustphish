@@ -8,10 +8,11 @@ CLIENT_FEATURES = "" # 可选：db mail appendix qrcode。多个feature以逗号
 TARGET_GNU = "x86_64-pc-windows-gnu"
 TARGET_GNU_x86 = "i686-pc-windows-gnu"
 TARGET_LINUX = "x86_64-unknown-linux-gnu"
+TARGET_MACOS = "aarch64-apple-darwin"
 
 [tasks.default]
 description = "Platform-specific client build"
-dependencies = ["client-windows", "client-linux"]
+dependencies = ["client-windows", "client-linux", "client-macos"]
 
 [tasks.client-windows]
 condition = { os = ["windows"] }
@@ -36,5 +37,18 @@ if is_empty ${features}
     exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --all-features
 else
     exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --features ${features}
+end
+'''
+
+[tasks.client-macos]
+condition = { os = ["macos"] }
+description = "Compiles the client for the macos target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_MACOS} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_MACOS} --features ${features}
 end
 '''
