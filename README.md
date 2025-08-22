@@ -16,7 +16,7 @@
 [简体中文](./README.md) | [English](./README_EN.md)
 <br/> 
 
-一个client-server分离的轻量化、高效能的钓鱼邮件演练工具，旨在替代`gophish`
+一个client-server分离的轻量化、高效能的钓鱼邮件演练工具，旨在替代`gophish`，本项目是基于原作者Ky9oss开发的rustphish-1.3的基础上修改部分逻辑完成。
 
 ---
 
@@ -299,6 +299,141 @@ appendix_name_for_sending = "xxx" # 发送木马名称
 
 # 常见问题
 
-### 1. 客户端读取服务端数据库记录，没有成功识别点击链接、木马的受害人ID
+### 1. 添加client在MACOS系统上的编译配置
 
 确保`client.exe`成功导入了邮箱: 在相同目录下存在`./email_database`。使用命令`./client.exe --show`确认邮箱成功导入
+
+
+# 改动如下
+
+### 1. 添加client在MACOS系统上的编译配置添加client在MACOS系统上的编译配置
+
+修改client目录下的Makefile.toml文件，添加TARGET_MACOS的编译环境，使得在MACOS系统上可以编译客户端
+```toml
+[config]
+skip_init_end_tasks = true
+skip_core_tasks = true
+
+[env]
+CLIENT_FEATURES = "" # 可选：db mail appendix qrcode。多个feature以逗号隔开。详情见./client/Cargo.toml [features] (如果为空，则默认所有特性全部开启)
+
+TARGET_GNU = "x86_64-pc-windows-gnu"
+TARGET_GNU_x86 = "i686-pc-windows-gnu"
+TARGET_LINUX = "x86_64-unknown-linux-gnu"
+TARGET_MACOS = "aarch64-apple-darwin"
+
+[tasks.default]
+description = "Platform-specific client build"
+dependencies = ["client-windows", "client-linux", "client-macos"]
+
+[tasks.client-windows]
+condition = { os = ["windows"] }
+description = "Compiles the client for the Windows GNU target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_GNU} --features ${features}
+end
+'''
+
+[tasks.client-linux]
+condition = { os = ["linux"] }
+description = "Compiles the client for the Linux target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_LINUX} --features ${features}
+end
+'''
+
+[tasks.client-macos]
+condition = { os = ["macos"] }
+description = "Compiles the client for the macos target."
+script_runner = "@duckscript"
+script = '''
+features = get_env CLIENT_FEATURES
+if is_empty ${features}
+    exec --fail-on-error cargo build --release --target ${TARGET_MACOS} --all-features
+else
+    exec --fail-on-error cargo build --release --target ${TARGET_MACOS} --features ${features}
+end
+'''
+```
+
+### 2. 简化附件钓鱼的逻辑
+1）移除了URL替换逻辑：删除了 replace_url_in_exe_rdata 函数调用和相关代码
+2）直接使用原始文件：直接从 original_appendix_name_exe 路径读取CS生成的木马文件
+3）简化了文件处理：不再创建临时目录和文件，直接读取源文件
+4）添加了文件存在性检查：确保CS生成的文件确实存在
+```toml
+fn add_attachment(
+    html_content: &str,
+    original_appendix_name_exe: &str,
+    entry_id: &str,
+    use_appendix: bool,
+    appendix_name_for_sending: &str,
+) -> Result<MultiPart, Box<dyn Error>> {
+    let appendix_name_for_sending = ensure_exe_suffix(appendix_name_for_sending);
+    let mpart = MultiPart::mixed()
+        .singlepart(
+            lettre::message::SinglePart::builder()
+                .header(lettre::message::header::ContentType::TEXT_HTML)
+                .body(html_content.to_string())
+        );
+
+    #[cfg(not(feature = "appendix"))]
+    match use_appendix {
+        true => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "你的程序没有编译appendix功能，不支持附件钓鱼，请修改你的配置文件"
+            )))
+
+        },
+        false => {
+            return Ok(mpart);
+        }
+    }
+
+    #[cfg(feature = "appendix")]
+    match use_appendix {
+        true => {
+            // 直接使用CS生成的木马文件，不进行改写
+            let cs_generated_file = original_appendix_name_exe;
+            
+            // 验证文件存在
+            if !Path::new(cs_generated_file).exists() {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("CS生成的木马文件不存在: {}", cs_generated_file)
+                )));
+            }
+
+            let path = Path::new(&appendix_name_for_sending);
+            let mime_str = MimeGuess::from_path(path)
+                .first_or_octet_stream()
+                .essence_str().to_string(); 
+
+            // 读取CS生成的木马文件内容
+            let body = fs::read(cs_generated_file)?;
+
+            crate::print_success(&format!("成功加载CS木马文件 {}", cs_generated_file));
+
+            return Ok(mpart.singlepart(
+                Attachment::new(appendix_name_for_sending.to_string())
+                    .body(body, ContentType::parse(&mime_str)?)
+            ))
+
+        },
+        false => {
+            return Ok(mpart);
+        }
+    }
+}
+```
