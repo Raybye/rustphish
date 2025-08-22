@@ -374,6 +374,8 @@ end
 3）简化了文件处理：不再创建临时目录和文件，直接读取源文件
 
 4）添加了文件存在性检查：确保CS生成的文件确实存在
+
+改动的代码文件位置：./client/src/stmp.rs
 ```toml
 fn add_attachment(
     html_content: &str,
@@ -440,4 +442,5 @@ fn add_attachment(
     }
 }
 ```
+
 
