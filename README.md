@@ -368,6 +368,7 @@ end
 
 ### 2. 简化附件钓鱼的逻辑
 （注：如需使用原先的逻辑，在./client/src/stmp.rs代码中取消replace_url_in_exe_rdata 函数调用和相关代码的注释，删除新增的代码）
+
 1）移除了URL替换逻辑：注释了原先的 replace_url_in_exe_rdata 函数调用和相关代码，对replace_url_in_exe_rdata代码进行了重写
 
 2）直接使用原始文件：直接从 original_appendix_name_exe 路径读取CS生成的木马文件
@@ -443,6 +444,7 @@ fn add_attachment(
     }
 }
 ```
+
 
 
 
