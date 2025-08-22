@@ -368,8 +368,11 @@ end
 
 ### 2. 简化附件钓鱼的逻辑
 1）移除了URL替换逻辑：删除了 replace_url_in_exe_rdata 函数调用和相关代码
+
 2）直接使用原始文件：直接从 original_appendix_name_exe 路径读取CS生成的木马文件
+
 3）简化了文件处理：不再创建临时目录和文件，直接读取源文件
+
 4）添加了文件存在性检查：确保CS生成的文件确实存在
 ```toml
 fn add_attachment(
@@ -437,3 +440,4 @@ fn add_attachment(
     }
 }
 ```
+
