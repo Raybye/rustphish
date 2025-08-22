@@ -299,14 +299,14 @@ appendix_name_for_sending = "xxx" # 发送木马名称
 
 # 常见问题
 
-### 1. 添加client在MACOS系统上的编译配置
+### 1. 客户端读取服务端数据库记录，没有成功识别点击链接、木马的受害人ID
 
 确保`client.exe`成功导入了邮箱: 在相同目录下存在`./email_database`。使用命令`./client.exe --show`确认邮箱成功导入
 
 
 # 改动如下
 
-### 1. 添加client在MACOS系统上的编译配置添加client在MACOS系统上的编译配置
+### 1. 添加client在MACOS系统上的编译配置
 
 修改client目录下的Makefile.toml文件，添加TARGET_MACOS的编译环境，使得在MACOS系统上可以编译客户端
 ```toml
@@ -442,5 +442,6 @@ fn add_attachment(
     }
 }
 ```
+
 
 
